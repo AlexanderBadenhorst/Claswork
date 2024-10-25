@@ -1,61 +1,37 @@
 import React, { Component } from "react";
-import GitHub from "./GitHub";
+import User from "./User";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { Nav, Navbar } from "react-bootstrap";
-import GitHubUser from "./GitHubUser";
-import Greeting from "./Greeting";
+import UserForm from "./UserForm";
+//firebase dependancies
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
+import "firebase/compat/firestore";
+import "firebase/compat/database";
 
 class App extends Component {
+  constructor() {
+    super();
+    console.log(firebase);
+  }
   render() {
     return (
       <div>
-        <Header />
+        <BrowserRouter>
+          <div>
+            <Switch>
+              <Route path="/edit/:id" component={UserForm} />
+              <Route path="/add" component={UserForm} />
+              <Route exact path="/" component={User} />
+              <Route path="/*" component={NotFound} />
+            </Switch>
+          </div>
+        </BrowserRouter>
       </div>
     );
   }
 }
 
 export default App;
-
-class Header extends Component {
-  render() {
-    return (
-      //specify which routes render which components
-      <BrowserRouter>
-        <div>
-          <Navbar bg="light" expand="lg">
-            <Navbar.Brand href="#home">React-Bootstrap</Navbar.Brand>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
-            <Navbar.Collapse id="basic-navbar-nav">
-              <Nav className="mr-auto">
-                <Nav.Link href="/">Home</Nav.Link>
-                <Nav.Link href="/github">GitHub</Nav.Link>
-                {/* homework */}
-                <Nav.Link href="/greeting">Greeting</Nav.Link>
-              </Nav>
-            </Navbar.Collapse>
-          </Navbar>
-          <Switch>
-            <Route path="/github/user/:login/:id" component={GitHubUser} />
-            <Route path="/github" component={GitHub} />
-            <Route exact path="/" component={Home} />
-            {/* homework */}
-            <Route path="/greeting" component={Greeting} />
-            <Route path="/*" component={NotFound} />
-          </Switch>
-        </div>
-      </BrowserRouter>
-    );
-  }
-}
-
-//http://localhost:3000/github/user/AlexanderBadenhorst/174330302
-
-class Home extends Component {
-  render() {
-    return <div>Home</div>;
-  }
-}
 
 class NotFound extends Component {
   render() {

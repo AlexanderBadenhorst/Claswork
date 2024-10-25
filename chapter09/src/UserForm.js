@@ -1,19 +1,59 @@
 import React, { Component } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+import 'firebase/compat/database';
+
+import { useParams } from 'react-router-dom';
 
 class UserForm extends Component {
+  title;
+  id;
+
   constructor(props) {
     super(props);
+    this.id = this.props.match.params.id;
+    this.title = "New User";
+    this.state = {
+      username: "",
+      email: "",
+    };
+    if (this.id) {
+      this.title = "Edit User";
+    }
+  }
+
+  componentDidMount() {
+    //if user has been selected for editing
+    //fields will be populated with the values in the database
+    if (this.id) {
+      firebase
+        .database()
+        .ref("/" + this.id)
+        .on("value", (snapshot) => {
+          this.setState({
+            username: snapshot.val().username,
+            email: snapshot.val().email,
+          });
+        });
+    }
   }
 
   render() {
     return (
       <div>
-        <h1>Any place in your app!</h1>
+        <h1>{this.title}</h1>
         <Formik
-          initialValues={{ email: "", password: "" }}
+          //input validation
+          //email:min 10 chars, isRequired
+          enableReinitialize={true}
+          initialValues={{
+            username: this.state.username,
+            email: this.state.email,
+          }}
           validate={(values) => {
-            const errors = {};
+            let errors = {};
             if (!values.email) {
               errors.email = "Required";
             } else if (
@@ -23,19 +63,32 @@ class UserForm extends Component {
             } else if (values.email.length < 10) {
               errors.email = "Email address too short";
             }
-            if (!values.password) {
-              errors.password = "Required";
-            } else if (values.password.length < 8) {
-              errors.password = "Password too short";
+            if (!values.username) {
+              errors.username = "Required";
+            } else if (values.username.length < 3) {
+              errors.username = "username too short";
             }
             return errors;
           }}
           onSubmit={(values, { setSubmitting }) => {
             setTimeout(() => {
-              alert(JSON.stringify(values, null, 2));
-              setSubmitting(false);
+                // actual submit logic... 
+                if (this.id) {
+                    firebase.database().ref('/' + this.id).update({
+                        username: values.username,
+                        email: values.email
+                    }).then(() => window.location.href = ("/"));
+                }
+                else {
+                    firebase.database().ref('/').push({
+                        username: values.username,
+                        email: values.email
+                    }).then(() => window.location.href = ("/"));
+                }
+
+                setSubmitting(false);
             }, 400);
-          }}
+        }}
         >
           {({ isSubmitting }) => (
             <Form>
@@ -43,9 +96,9 @@ class UserForm extends Component {
               <span style={{ color: "red", fontWeight: "bold" }}>
                 <ErrorMessage name="email" component="div" />
               </span>
-              <Field type="password" name="password" />
+              <Field type="text" name="username" />
               <span style={{ color: "red", fontWeight: "bold" }}>
-                <ErrorMessage name="password" component="div" />
+                <ErrorMessage name="username" component="div" />
               </span>
               <button type="submit" disabled={isSubmitting}>
                 Submit
@@ -58,4 +111,9 @@ class UserForm extends Component {
   }
 }
 
-export default UserForm;
+export default (props) => (
+    < UserForm
+        {...props}
+        params={useParams()}
+    />
+);
